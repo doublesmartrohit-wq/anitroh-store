@@ -149,7 +149,7 @@ const Checkout = () => {
     throw new Error(itemErr.message);
   }
 
-  await fetch("http://localhost:3001/send-order-email", {
+  await fetch("/api/send-order-email", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
