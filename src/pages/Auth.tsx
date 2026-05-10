@@ -52,12 +52,13 @@ const Auth = () => {
   const handleGoogle = async () => {
   setBusy(true);
 
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth`,
-    },
-  });
+const { error } = await supabase.auth.signInWithOAuth({
+  provider: "google",
+  options: {
+    redirectTo: `${window.location.origin}/`,
+  },
+});
+
 
   if (error) {
     toast.error(error.message);
