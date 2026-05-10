@@ -30,73 +30,473 @@ interface ItemRecord {
   color: string | null;
 }
 
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]!));
 
 export const generateInvoiceHtml = (order: OrderRecord, items: ItemRecord[]) => {
-  const inv = order.invoice_number || `INV-${order.id.slice(0, 8).toUpperCase()}`;
-  const date = new Date(order.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const inv =
+    order.invoice_number ||
+    `INV-${order.id.slice(0, 8).toUpperCase()}`;
+
+  const date = new Date(order.created_at).toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
+
   const rows = items.map(i => `
     <tr>
-      <td>${escapeHtml(i.name)}${i.size || i.color ? `<br><small style="color:#888">${[i.size, i.color].filter(Boolean).join(" · ")}</small>` : ""}</td>
-      <td style="text-align:center">${i.quantity}</td>
-      <td style="text-align:right">₹${Number(i.price).toLocaleString("en-IN")}</td>
-      <td style="text-align:right">₹${(Number(i.price) * i.quantity).toLocaleString("en-IN")}</td>
-    </tr>`).join("");
+      <td>
+        <div style="font-weight:500;color:#111">
+          ${escapeHtml(i.name)}
+        </div>
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${inv}</title>
+        ${
+          i.size || i.color
+            ? `
+          <div style="margin-top:6px;color:#888;font-size:12px">
+            ${[i.size, i.color].filter(Boolean).join(" · ")}
+          </div>
+        `
+            : ""
+        }
+      </td>
+
+      <td style="text-align:center">
+        ${i.quantity}
+      </td>
+
+      <td style="text-align:right">
+        ₹${Number(i.price).toLocaleString("en-IN")}
+      </td>
+
+      <td style="text-align:right;font-weight:500">
+        ₹${(Number(i.price) * i.quantity).toLocaleString("en-IN")}
+      </td>
+    </tr>
+  `).join("");
+
+  return `
+<!doctype html>
+
+<html>
+
+<head>
+<meta charset="utf-8">
+
+<title>Invoice ${inv}</title>
+
 <style>
-  *{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif;margin:0;padding:32px;color:#111;background:#fff}
-  .wrap{max-width:780px;margin:auto}
-  .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:24px}
-  .brand{font-size:28px;font-weight:800;letter-spacing:1px}
-  .muted{color:#666;font-size:13px}
-  h2{font-size:14px;text-transform:uppercase;letter-spacing:1px;margin:24px 0 8px}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;text-align:left}
-  th{background:#fafafa;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:1px;color:#555}
-  .totals{margin-top:16px;margin-left:auto;width:280px}
-  .totals div{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
-  .totals .grand{border-top:2px solid #111;font-size:18px;font-weight:800;padding-top:10px;margin-top:6px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px}
-  .badge{display:inline-block;padding:3px 8px;background:#111;color:#fff;border-radius:3px;font-size:11px;text-transform:uppercase;letter-spacing:1px}
-  @media print{.noprint{display:none}}
-  .btn{padding:10px 18px;background:#111;color:#fff;border:0;border-radius:4px;cursor:pointer;font-weight:600}
-</style></head><body><div class="wrap">
-  <div class="noprint" style="text-align:right;margin-bottom:12px"><button class="btn" onclick="window.print()">Print / Save PDF</button></div>
-  <div class="head">
-    <div><div class="brand">ANITROH STORE</div><div class="muted">Premium Fashion · Footwear · Wellness</div></div>
-    <div style="text-align:right">
-      <div style="font-size:18px;font-weight:700">INVOICE</div>
-      <div class="muted">${escapeHtml(inv)}</div>
-      <div class="muted">${date}</div>
-      <div style="margin-top:6px"><span class="badge">${escapeHtml(order.status)}</span></div>
+
+*{
+  box-sizing:border-box
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  margin:0;
+  padding:48px;
+  color:#111;
+  background:#fafafa;
+  line-height:1.6;
+}
+
+.wrap{
+  max-width:820px;
+  margin:auto;
+  background:#fff;
+  padding:48px;
+  border:1px solid #ececec;
+}
+
+.head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding-bottom:28px;
+  border-bottom:1px solid #e8e8e8;
+  margin-bottom:40px;
+}
+
+.brand{
+  font-size:34px;
+  font-weight:700;
+  letter-spacing:-1px;
+}
+
+.tagline{
+  color:#777;
+  font-size:13px;
+  margin-top:6px;
+  letter-spacing:0.3px;
+}
+
+.muted{
+  color:#666;
+  font-size:13px;
+}
+
+h2{
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.2px;
+  margin:0 0 14px;
+  color:#111;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+}
+
+th{
+  text-align:left;
+  font-size:11px;
+  color:#777;
+  font-weight:600;
+  padding:16px 12px;
+  border-bottom:1px solid #ececec;
+}
+
+td{
+  padding:20px 12px;
+  border-bottom:1px solid #f1f1f1;
+  font-size:14px;
+  vertical-align:top;
+}
+
+.totals{
+  margin-top:36px;
+  margin-left:auto;
+  width:320px;
+}
+
+.totals div{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  font-size:14px;
+  color:#444;
+}
+
+.totals .grand{
+  border-top:1px solid #111;
+  margin-top:10px;
+  padding-top:18px;
+  font-size:22px;
+  font-weight:700;
+  color:#111;
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:60px;
+  margin-top:8px;
+}
+
+.badge{
+  display:inline-block;
+  padding:5px 12px;
+  background:#f3f3f3;
+  border:1px solid #e4e4e4;
+  color:#111;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.3px;
+}
+
+.tracking{
+  margin-top:14px;
+  padding:16px;
+  background:#fafafa;
+  border:1px solid #ececec;
+  border-radius:10px;
+}
+
+.tracking a{
+  color:#111;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.footer{
+  margin-top:70px;
+  text-align:center;
+  color:#777;
+  font-size:12px;
+  line-height:1.8;
+}
+
+@media print{
+  .noprint{
+    display:none
+  }
+
+  body{
+    background:#fff;
+    padding:0;
+  }
+
+  .wrap{
+    border:none;
+    padding:0;
+  }
+}
+
+.btn{
+  padding:12px 20px;
+  background:#111;
+  color:#fff;
+  border:0;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:500;
+  font-size:13px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="noprint" style="text-align:right;margin-bottom:20px">
+  <button class="btn" onclick="window.print()">
+    Print / Save PDF
+  </button>
+</div>
+
+<div class="head">
+
+  <div>
+    <div class="brand">ANITROH.</div>
+
+    <div class="tagline">
+      Premium Fashion · Footwear · Wellness
     </div>
   </div>
-  <div class="grid2">
-    <div><h2>Bill To</h2>
-      <div><strong>${escapeHtml(order.full_name)}</strong></div>
-      <div class="muted">${escapeHtml(order.phone)}</div>
-      <div class="muted">${escapeHtml(order.address_line1)}${order.address_line2 ? ", " + escapeHtml(order.address_line2) : ""}</div>
-      <div class="muted">${escapeHtml(order.city)}, ${escapeHtml(order.state)} - ${escapeHtml(order.pincode)}</div>
-      <div class="muted">${escapeHtml(order.country)}</div>
+
+  <div style="text-align:right">
+
+    <div style="font-size:18px;font-weight:600">
+      Invoice
     </div>
-    <div><h2>Payment & Shipping</h2>
-      <div class="muted">Payment: <strong style="color:#111;text-transform:uppercase">${escapeHtml(order.payment_method)}</strong></div>
-      ${order.tracking_id ? `<div class="muted">Tracking: <strong style="color:#111">${escapeHtml(order.tracking_id)}</strong></div>` : ""}
-      ${order.tracking_url ? `<div class="muted"><a href="${escapeHtml(order.tracking_url)}">Track shipment →</a></div>` : ""}
+
+    <div class="muted">
+      ${escapeHtml(inv)}
     </div>
+
+    <div class="muted">
+      ${date}
+    </div>
+
+    <div style="margin-top:10px">
+      <span class="badge">
+        ${escapeHtml(order.status)}
+      </span>
+    </div>
+
   </div>
-  <h2>Items</h2>
-  <table><thead><tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead>
-    <tbody>${rows}</tbody></table>
-  <div class="totals">
-    <div><span>Subtotal</span><span>₹${Number(order.subtotal).toLocaleString("en-IN")}</span></div>
-    ${Number(order.discount) > 0 ? `<div><span>Discount</span><span>-₹${Number(order.discount).toLocaleString("en-IN")}</span></div>` : ""}
-    <div><span>Shipping</span><span>${Number(order.shipping) === 0 ? "FREE" : "₹" + Number(order.shipping).toLocaleString("en-IN")}</span></div>
-    <div class="grand"><span>Total</span><span>₹${Number(order.total).toLocaleString("en-IN")}</span></div>
+
+</div>
+
+<div class="grid2">
+
+  <div>
+
+    <h2>Bill To</h2>
+
+    <div style="font-weight:600">
+      ${escapeHtml(order.full_name)}
+    </div>
+
+    <div class="muted">
+      ${escapeHtml(order.phone)}
+    </div>
+
+    <div class="muted">
+      ${escapeHtml(order.address_line1)}
+      ${
+        order.address_line2
+          ? ", " + escapeHtml(order.address_line2)
+          : ""
+      }
+    </div>
+
+    <div class="muted">
+      ${escapeHtml(order.city)},
+      ${escapeHtml(order.state)}
+      -
+      ${escapeHtml(order.pincode)}
+    </div>
+
+    <div class="muted">
+      ${escapeHtml(order.country)}
+    </div>
+
   </div>
-  <p class="muted" style="margin-top:32px;text-align:center;font-size:12px">Thank you for shopping with ANITROH STORE.</p>
-</div></body></html>`;
+
+  <div>
+
+    <h2>Payment & Shipping</h2>
+
+    <div class="tracking">
+
+      <div class="muted">
+        Payment:
+        <strong style="color:#111;text-transform:uppercase">
+          ${escapeHtml(order.payment_method)}
+        </strong>
+      </div>
+
+      ${
+        order.tracking_id
+          ? `
+        <div class="muted" style="margin-top:8px">
+          Tracking ID:
+          <strong style="color:#111">
+            ${escapeHtml(order.tracking_id)}
+          </strong>
+        </div>
+      `
+          : ""
+      }
+
+      ${
+        order.tracking_url
+          ? `
+        <div style="margin-top:10px">
+          <a href="${escapeHtml(order.tracking_url)}">
+            Track Shipment →
+          </a>
+        </div>
+      `
+          : ""
+      }
+
+    </div>
+
+  </div>
+
+</div>
+
+<h2 style="margin-top:50px">
+  Items
+</h2>
+
+<table>
+
+<thead>
+
+<tr>
+  <th>Product</th>
+
+  <th style="text-align:center">
+    Qty
+  </th>
+
+  <th style="text-align:right">
+    Price
+  </th>
+
+  <th style="text-align:right">
+    Total
+  </th>
+</tr>
+
+</thead>
+
+<tbody>
+
+${rows}
+
+</tbody>
+
+</table>
+
+<div class="totals">
+
+  <div>
+    <span>Subtotal</span>
+
+    <span>
+      ₹${Number(order.subtotal).toLocaleString("en-IN")}
+    </span>
+  </div>
+
+  ${
+    Number(order.discount) > 0
+      ? `
+    <div>
+      <span>Discount</span>
+
+      <span>
+        -₹${Number(order.discount).toLocaleString("en-IN")}
+      </span>
+    </div>
+  `
+      : ""
+  }
+
+  <div>
+
+    <span>Shipping</span>
+
+    <span>
+      ${
+        Number(order.shipping) === 0
+          ? "FREE"
+          : "₹" +
+            Number(order.shipping).toLocaleString("en-IN")
+      }
+    </span>
+
+  </div>
+
+  <div class="grand">
+
+    <span>Total</span>
+
+    <span>
+      ₹${Number(order.total).toLocaleString("en-IN")}
+    </span>
+
+  </div>
+
+</div>
+
+<div class="footer">
+
+  <div>
+    Crafted for modern living.
+  </div>
+
+  <div>
+    Thank you for choosing ANITROH.
+  </div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
+`;
 };
 
 const fetchInvoiceData = async (orderId: string) => {
