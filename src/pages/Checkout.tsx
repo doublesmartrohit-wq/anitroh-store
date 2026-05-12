@@ -165,44 +165,105 @@ const Checkout = () => {
   return order;
 };
 
-  const initiatePayment = (f: CheckoutFields) =>
-    new Promise<{ razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }>(async (resolve, reject) => {
-      try {
-        const { data: rp, error: rpErr } = await supabase.functions.invoke("razorpay-create-order", {
-          body: { amount: total, receipt: `rcpt_${Date.now()}` },
-        });
-        if (rpErr || !rp?.orderId) return reject(new Error(rpErr?.message || "Failed to start payment"));
-        const RZP = (window as any).Razorpay;
-        if (!RZP) return reject(new Error("Razorpay SDK not loaded"));
-        const rzp = new RZP({
-          key: rp.keyId,
-          amount: rp.amount,
-          currency: rp.currency,
-          name: "ANITROH STORE",
-          description: "Order Payment",
-          order_id: rp.orderId,
-          prefill: { name: f.full_name, email: user!.email || "", contact: f.phone },
-          theme: { color: "#000000" },
-          handler: (resp: any) => resolve(resp),
-          modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
-        });
-        rzp.on?.("payment.failed", (resp: any) =>
-          reject(new Error(resp?.error?.description || "Payment failed"))
-        );
-        rzp.open();
-      } catch (e: any) {
-        reject(e);
-      }
-    });
+const initiatePayment = (f: CheckoutFields) =>
+  new Promise<{
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }>(async (resolve, reject) => {
+    try {
 
-  const verifyPayment = async (
-    resp: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }
-  ) => {
-    const { data: ver, error: verErr } = await supabase.functions.invoke("razorpay-verify-payment", {
-      body: resp,
-    });
-    if (verErr || !ver?.verified) throw new Error("Payment verification failed");
-  };
+      const response = await fetch("/api/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: total,
+        }),
+      });
+
+      const rp = await response.json();
+
+      if (!response.ok) {
+        return reject(
+          new Error(rp.error || "Failed to create Razorpay order")
+        );
+      }
+
+      const RZP = (window as any).Razorpay;
+
+      if (!RZP) {
+        return reject(new Error("Razorpay SDK not loaded"));
+      }
+
+      const rzp = new RZP({
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+
+        amount: rp.amount,
+
+        currency: rp.currency,
+
+        name: "ANITROH STORE",
+
+        description: "Order Payment",
+
+        order_id: rp.id,
+
+        prefill: {
+          name: f.full_name,
+          email: user?.email || "",
+          contact: f.phone,
+        },
+
+        theme: {
+          color: "#111111",
+        },
+
+        handler: (resp: any) => {
+          resolve(resp);
+        },
+
+        modal: {
+          ondismiss: () =>
+            reject(new Error("Payment cancelled")),
+        },
+      });
+
+      rzp.on?.("payment.failed", (resp: any) => {
+        reject(
+          new Error(
+            resp?.error?.description || "Payment failed"
+          )
+        );
+      });
+
+      rzp.open();
+
+    } catch (e: any) {
+      reject(e);
+    }
+  });
+
+const verifyPayment = async (
+  resp: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }
+) => {
+
+  if (
+    !resp.razorpay_payment_id ||
+    !resp.razorpay_order_id
+  ) {
+    throw new Error("Payment verification failed");
+  }
+
+  return true;
+}
+
+
 
   const placeOrder = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
